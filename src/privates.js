@@ -461,6 +461,7 @@ function goToStep(wizard, options, state, index)
             });
         })
         .fail(function(){
+            loadingPanel.remove();
             wizard.find(".steps li").eq(oldIndex).addClass("error");
         });
 
