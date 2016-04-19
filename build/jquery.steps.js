@@ -1,6 +1,6 @@
 /*! 
- * jQuery Steps v1.1.0 - 09/04/2014
- * Copyright (c) 2014 Rafael Staib (http://www.jquery-steps.com)
+ * jQuery Steps v1.1.0 - 04/19/2016
+ * Copyright (c) 2016 Rafael Staib (http://www.jquery-steps.com)
  * Licensed under MIT http://www.opensource.org/licenses/MIT
  */
 ;(function ($, undefined)
@@ -500,25 +500,29 @@ function goToStep(wizard, options, state, index)
     }
 
     var oldIndex = state.currentIndex;
-    if (wizard.triggerHandler("stepChanging", [state.currentIndex, index]))
-    {
-        // Save new state
-        state.currentIndex = index;
-        saveCurrentStateToCookie(wizard, options, state);
 
-        // Change visualisation
-        refreshStepNavigation(wizard, options, state, oldIndex);
-        refreshPagination(wizard, options, state);
-        loadAsyncContent(wizard, options, state);
-        startTransitionEffect(wizard, options, state, index, oldIndex, function()
-        {
-            wizard.triggerHandler("stepChanged", [index, oldIndex]);
+    var loadingPanel = $(renderTemplate(options.loadingTemplate, { text: options.labels.loading }));
+    getStepPanel(wizard, oldIndex)._aria("busy", "true").append(loadingPanel);
+
+    wizard.triggerHandler("stepChanging", [state.currentIndex, index])
+        .done(function(){
+            loadingPanel.remove();
+            // Save new state
+            state.currentIndex = index;
+            saveCurrentStateToCookie(wizard, options, state);
+
+            // Change visualisation
+            refreshStepNavigation(wizard, options, state, oldIndex);
+            refreshPagination(wizard, options, state);
+            loadAsyncContent(wizard, options, state);
+            startTransitionEffect(wizard, options, state, index, oldIndex, function()
+            {
+                wizard.triggerHandler("stepChanged", [index, oldIndex]);
+            });
+        })
+        .fail(function(){
+            wizard.find(".steps li").eq(oldIndex).addClass("error");
         });
-    }
-    else
-    {
-        wizard.find(".steps li").eq(oldIndex).addClass("error");
-    }
 
     return true;
 }
@@ -1895,7 +1899,7 @@ var defaults = $.fn.steps.defaults = {
      * @default function (event, currentIndex, newIndex) { return true; }
      * @for defaults
      **/
-    onStepChanging: function (event, currentIndex, newIndex) { return true; },
+    onStepChanging: function (event, currentIndex, newIndex) { return $.Deferred().resolve(); },
 
     /**
      * Fires after the step has change. 

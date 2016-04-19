@@ -440,25 +440,29 @@ function goToStep(wizard, options, state, index)
     }
 
     var oldIndex = state.currentIndex;
-    if (wizard.triggerHandler("stepChanging", [state.currentIndex, index]))
-    {
-        // Save new state
-        state.currentIndex = index;
-        saveCurrentStateToCookie(wizard, options, state);
 
-        // Change visualisation
-        refreshStepNavigation(wizard, options, state, oldIndex);
-        refreshPagination(wizard, options, state);
-        loadAsyncContent(wizard, options, state);
-        startTransitionEffect(wizard, options, state, index, oldIndex, function()
-        {
-            wizard.triggerHandler("stepChanged", [index, oldIndex]);
+    var loadingPanel = $(renderTemplate(options.loadingTemplate, { text: options.labels.loading }));
+    getStepPanel(wizard, oldIndex)._aria("busy", "true").append(loadingPanel);
+
+    wizard.triggerHandler("stepChanging", [state.currentIndex, index])
+        .done(function(){
+            loadingPanel.remove();
+            // Save new state
+            state.currentIndex = index;
+            saveCurrentStateToCookie(wizard, options, state);
+
+            // Change visualisation
+            refreshStepNavigation(wizard, options, state, oldIndex);
+            refreshPagination(wizard, options, state);
+            loadAsyncContent(wizard, options, state);
+            startTransitionEffect(wizard, options, state, index, oldIndex, function()
+            {
+                wizard.triggerHandler("stepChanged", [index, oldIndex]);
+            });
+        })
+        .fail(function(){
+            wizard.find(".steps li").eq(oldIndex).addClass("error");
         });
-    }
-    else
-    {
-        wizard.find(".steps li").eq(oldIndex).addClass("error");
-    }
 
     return true;
 }

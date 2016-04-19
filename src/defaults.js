@@ -297,7 +297,7 @@ var defaults = $.fn.steps.defaults = {
      * @default function (event, currentIndex, newIndex) { return true; }
      * @for defaults
      **/
-    onStepChanging: function (event, currentIndex, newIndex) { return true; },
+    onStepChanging: function (event, currentIndex, newIndex) { return $.Deferred().resolve(); },
 
     /**
      * Fires after the step has change. 
